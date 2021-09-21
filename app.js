@@ -10,7 +10,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 mongoose.connect('mongodb://localhost:27017/mestodb')
-  .catch((err) => console.log(err.message));
 
 app.use('/users', require('./routes/users'));
 // app.use('/cards', require('./routes/cards'));
