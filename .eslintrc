@@ -1,0 +1,11 @@
+{
+  "extends": "airbnb-base",
+  "overrides": [
+    {
+      "files": ["*.js","*.html"],
+      "rules": {
+        "no-underscore-dangle": "off"
+      }
+    }
+  ]
+}
