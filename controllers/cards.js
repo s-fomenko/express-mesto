@@ -1,7 +1,5 @@
 const Card = require('../models/card');
-
-const validationErrorStatus = 400;
-const notFoundErrorStatus = 404;
+const { validationErrorStatus, notFoundErrorStatus } = require('../errors/errors');
 
 module.exports.getCards = (req, res) => {
   Card.find({})
@@ -33,7 +31,13 @@ module.exports.deleteCard = (req, res) => {
       }
       res.send({ data: card });
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(validationErrorStatus).send({ message: 'Невалидный id' });
+        return;
+      }
+      res.status(500).send({ message: err.message });
+    });
 };
 
 module.exports.likeCard = (req, res) => {
@@ -42,12 +46,18 @@ module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(cardId, { $addToSet: { likes: req.user._id } }, { new: true })
     .then((card) => {
       if (!card) {
-        res.status(validationErrorStatus).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+        res.status(notFoundErrorStatus).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
         return;
       }
       res.send({ data: card });
     })
-    .catch((err) => res.status(500).send({ message: err.message, name: err.name }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(validationErrorStatus).send({ message: 'Невалидный id' });
+        return;
+      }
+      res.status(500).send({ message: err.message });
+    });
 };
 
 module.exports.dislikeCard = (req, res) => {
@@ -56,10 +66,16 @@ module.exports.dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(cardId, { $pull: { likes: req.user._id } }, { new: true })
     .then((card) => {
       if (!card) {
-        res.status(validationErrorStatus).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+        res.status(notFoundErrorStatus).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
         return;
       }
       res.send({ data: card });
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(validationErrorStatus).send({ message: 'Невалидный id' });
+        return;
+      }
+      res.status(500).send({ message: err.message });
+    });
 };

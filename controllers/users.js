@@ -1,7 +1,5 @@
 const User = require('../models/user');
-
-const validationErrorStatus = 400;
-const notFoundErrorStatus = 404;
+const { validationErrorStatus, notFoundErrorStatus } = require('../errors/errors');
 
 module.exports.getUser = (req, res) => {
   User.find({})
@@ -18,7 +16,13 @@ module.exports.getUserById = (req, res) => {
       }
       res.send({ data: user });
     })
-    .catch((err) => res.status(500).send({ message: err.message, name: err.name }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(validationErrorStatus).send({ message: 'Невалидный id' });
+        return;
+      }
+      res.status(500).send({ message: err.message });
+    });
 };
 
 module.exports.createUser = (req, res) => {
@@ -39,7 +43,7 @@ module.exports.updateUserProfile = (req, res) => {
   const { name, about } = req.body;
   const id = req.user._id;
 
-  User.findOneAndUpdate(id, { name, about }, { new: true })
+  User.findOneAndUpdate(id, { name, about }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         res.status(notFoundErrorStatus).send({ message: 'Пользователь с указанным _id не найден' });
@@ -52,6 +56,10 @@ module.exports.updateUserProfile = (req, res) => {
         res.status(validationErrorStatus).send({ message: 'Переданы некорректные данные при обновлении профиля' });
         return;
       }
+      if (err.name === 'ValidationError') {
+        res.status(validationErrorStatus).send({ message: 'Некорректные данные' });
+        return;
+      }
       res.status(500).send({ message: err.message, name: err.name });
     });
 };
@@ -60,7 +68,7 @@ module.exports.updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
   const id = req.user._id;
 
-  User.findOneAndUpdate(id, { avatar }, { new: true })
+  User.findOneAndUpdate(id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         res.status(notFoundErrorStatus).send({ message: 'Пользователь с указанным _id не найден' });
@@ -71,6 +79,10 @@ module.exports.updateUserAvatar = (req, res) => {
     .catch((err) => {
       if (err.name === 'CastError') {
         res.status(validationErrorStatus).send({ message: 'Переданы некорректные данные при обновлении аватара' });
+        return;
+      }
+      if (err.name === 'ValidationError') {
+        res.status(validationErrorStatus).send({ message: 'Некорректные данные' });
         return;
       }
       res.status(500).send({ message: err.message, name: err.name });
